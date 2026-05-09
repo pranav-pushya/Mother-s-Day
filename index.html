@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Happy Mother's Day</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+
+body {
+  width:100vw; height:100vh;
+  overflow:hidden;
+  background:#FFF0F3;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+
+/* ====== SCENE WRAPPER (CSS 3D perspective) ====== */
+#scene {
+  width:100%; height:100%;
+  perspective: 900px;
+  perspective-origin: 50% 50%;
+  position:relative;
+  overflow:hidden;
+}
+
+#scene-inner {
+  width:100%; height:100%;
+  transform-style: preserve-3d;
+  position:relative;
+  transition: transform 0.1s ease-out;
+}
+
+/* ====== BACKGROUND GRADIENT LAYER ====== */
+#bg-layer {
+  position:absolute; inset:0;
+  background: radial-gradient(ellipse at 60% 40%, 
+    #FFF5F7 0%, #FFCDD2 45%, #FFB3C6 75%, #F48FB1 100%);
+  z-index:1;
+}
+
+/* ====== PAPER-CUT LEAF LAYERS ====== */
+/* Each layer at different Z — creates REAL depth */
+.leaf-layer {
+  position:absolute; inset:0;
+  z-index:2;
+  pointer-events:none;
+}
+
+/* Individual leaf shapes using clip-path */
+.leaf {
+  position:absolute;
+  border-radius:50% 0 50% 0;
+  transform-style:preserve-3d;
+}
+
+/* LAYER 1 — farthest back, lightest */
+#layer-1 { transform: translateZ(-80px); opacity:0.4; }
+.l1 { background:#FFCDD2; }
+
+/* LAYER 2 */
+#layer-2 { transform: translateZ(-55px); opacity:0.55; }
+.l2 { background:#F48FB1; }
+
+/* LAYER 3 */
+#layer-3 { transform: translateZ(-35px); opacity:0.7; }
+.l3 { background:#E91E8C; }
+
+/* LAYER 4 */
+#layer-4 { transform: translateZ(-18px); opacity:0.82; }
+.l4 { background:#D81B60; }
+
+/* LAYER 5 — closest, darkest */
+#layer-5 { transform: translateZ(-5px); opacity:0.92; }
+.l5 { background:#AD1457; }
+
+/* ====== MOM SVG SILHOUETTE ====== */
+#mom-wrap {
+  position:absolute;
+  right: -2vw;
+  bottom: 0;
+  width: min(58vw, 340px);
+  height: 88vh;
+  z-index: 20;
+  pointer-events:none;
+  transform-style:preserve-3d;
+  transform: translateZ(30px);
+  animation: momFloat 6s ease-in-out infinite;
+}
+
+@keyframes momFloat {
+  0%,100% { transform: translateZ(30px) translateY(0px) rotate(0deg); }
+  33%     { transform: translateZ(30px) translateY(-6px) rotate(0.3deg); }
+  66%     { transform: translateZ(30px) translateY(-3px) rotate(-0.2deg); }
+}
+
+#mom-svg {
+  width:100%; height:100%;
+  filter: drop-shadow(-12px 8px 24px rgba(173,20,87,0.25));
+}
+
+/* ====== TEXT BLOCK ====== */
+#text-block {
+  position:absolute;
+  left: 5vw;
+  top:50%;
+  transform: translateY(-42%) translateZ(50px);
+  z-index:30;
+  transform-style:preserve-3d;
+  max-width: min(52vw, 270px);
+}
+
+.badge {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  background:rgba(255,255,255,0.72);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(233,30,140,0.2);
+  border-radius:30px;
+  padding:5px 14px 5px 10px;
+  margin-bottom:16px;
+  opacity:0;
+}
+
+.badge-dot {
+  width:6px; height:6px;
+  border-radius:50%;
+  background:#E91E8C;
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:0.5; transform:scale(0.7); }
+}
+
+.badge span {
+  font-size:clamp(9px,2.5vw,11px);
+  color:#C2185B;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  font-weight:600;
+}
+
+.main-title {
+  font-size:clamp(38px,10vw,72px);
+  color:#AD1457;
+  font-weight:800;
+  line-height:1.0;
+  letter-spacing:-0.01em;
+  margin-bottom:12px;
+  opacity:0;
+  text-shadow: 0 2px 30px rgba(255,255,255,0.6);
+}
+
+.sub-title {
+  font-size:clamp(13px,3.5vw,17px);
+  color:#E91E8C;
+  opacity:0;
+  font-style:italic;
+  margin-bottom:28px;
+  line-height:1.5;
+}
+
+.cta-btn {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:linear-gradient(135deg,#E91E8C,#C2185B);
+  color:white;
+  border:none;
+  border-radius:50px;
+  padding:15px 32px;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:0.04em;
+  text-decoration:none;
+  cursor:pointer;
+  box-shadow: 0 8px 30px rgba(233,30,140,0.4),
+              0 2px 8px rgba(233,30,140,0.2);
+  opacity:0;
+  position:relative;
+  overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+  min-height:52px;
+}
+
+.cta-btn::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.2),transparent);
+  border-radius:50px;
+}
+
+.cta-btn:active { transform:scale(0.95); }
+
+/* ====== AMBIENT FLOATING FLOWERS ====== */
+.ambient-flower {
+  position:absolute;
+  pointer-events:none;
+  z-index:15;
+  animation: flowerFloat linear infinite;
+  opacity:0;
+}
+
+@keyframes flowerFloat {
+  0%   { transform:translateY(110vh) rotate(0deg); opacity:0; }
+  5%   { opacity:0.7; }
+  95%  { opacity:0.7; }
+  100% { transform:translateY(-15vh) rotate(360deg); opacity:0; }
+}
+
+/* ====== CANVAS (petals) ====== */
+#petal-canvas {
+  position:absolute;
+  inset:0;
+  z-index:25;
+  pointer-events:none;
+}
+
+/* ====== SCROLL HINT ====== */
+#scroll-hint {
+  position:absolute;
+  bottom:28px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:50;
+  text-align:center;
+  opacity:0;
+}
+#scroll-hint span {
+  display:block;
+  font-size:10px;
+  color:#C2185B;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  opacity:0.6;
+  margin-bottom:6px;
+}
+#scroll-hint .arrow {
+  font-size:18px;
+  color:#E91E8C;
+  opacity:0.5;
+  animation:arrowBounce 1.5s ease-in-out infinite;
+}
+@keyframes arrowBounce {
+  0%,100%{ transform:translateY(0); }
+  50%    { transform:translateY(5px); }
+}
+
+/* ====== PAGE DOTS ====== */
+.page-dots {
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:8px;
+  z-index:200;
+  background:rgba(255,255,255,0.65);
+  backdrop-filter:blur(10px);
+  padding:7px 14px;
+  border-radius:20px;
+  border:1px solid rgba(233,30,140,0.12);
+}
+.page-dots a {
+  width:8px; height:8px;
+  border-radius:50%;
+  background:rgba(233,30,140,0.25);
+  display:block;
+  transition:all 0.3s;
+}
+.page-dots a.active {
+  width:20px;
+  border-radius:4px;
+  background:#E91E8C;
+}
+
+/* ====== MOBILE ====== */
+@media (max-width:768px) {
+  #text-block { 
+    max-width:56vw; 
+    left:4vw;
+  }
+  #mom-wrap { 
+    width:min(65vw,280px);
+    right:-4vw;
+  }
+}
+@media (max-width:400px) {
+  #text-block { max-width:58vw; }
+  #mom-wrap   { width:70vw; right:-6vw; }
+}
+</style>
+</head>
+<body>
+
+<div id="scene">
+  <div id="scene-inner">
+
+    <!-- Background -->
+    <div id="bg-layer"></div>
+
+    <!-- Paper-cut leaf layers -->
+    <div class="leaf-layer" id="layer-1">
+      <div class="leaf l1" style="width:160px;height:240px;top:-30px;right:52%;transform:rotate(-38deg)"></div>
+      <div class="leaf l1" style="width:130px;height:200px;top:20px;right:44%;transform:rotate(-60deg)"></div>
+      <div class="leaf l1" style="width:100px;height:160px;bottom:40px;right:55%;transform:rotate(25deg)"></div>
+    </div>
+
+    <div class="leaf-layer" id="layer-2">
+      <div class="leaf l2" style="width:145px;height:220px;top:-20px;right:50%;transform:rotate(-42deg)"></div>
+      <div class="leaf l2" style="width:115px;height:175px;top:30px;right:42%;transform:rotate(-65deg)"></div>
+      <div class="leaf l2" style="width:110px;height:170px;bottom:30px;right:52%;transform:rotate(30deg)"></div>
+      <div class="leaf l2" style="width:90px;height:140px;bottom:80px;right:42%;transform:rotate(50deg)"></div>
+    </div>
+
+    <div class="leaf-layer" id="layer-3">
+      <div class="leaf l3" style="width:130px;height:200px;top:-15px;right:48%;transform:rotate(-35deg)"></div>
+      <div class="leaf l3" style="width:105px;height:160px;top:50px;right:40%;transform:rotate(-70deg)"></div>
+      <div class="leaf l3" style="width:120px;height:180px;bottom:20px;right:50%;transform:rotate(22deg)"></div>
+      <div class="leaf l3" style="width:100px;height:150px;top:0;right:38%;transform:rotate(-15deg)"></div>
+    </div>
+
+    <div class="leaf-layer" id="layer-4">
+      <div class="leaf l4" style="width:120px;height:185px;top:-10px;right:46%;transform:rotate(-40deg)"></div>
+      <div class="leaf l4" style="width:95px;height:148px;top:55px;right:38%;transform:rotate(-68deg)"></div>
+      <div class="leaf l4" style="width:108px;height:168px;bottom:10px;right:48%;transform:rotate(28deg)"></div>
+    </div>
+
+    <div class="leaf-layer" id="layer-5">
+      <div class="leaf l5" style="width:110px;height:170px;top:-5px;right:44%;transform:rotate(-38deg)"></div>
+      <div class="leaf l5" style="width:85px;height:135px;top:60px;right:36%;transform:rotate(-72deg)"></div>
+      <div class="leaf l5" style="width:95px;height:150px;bottom:5px;right:46%;transform:rotate(32deg)"></div>
+    </div>
+
+    <!-- Mom silhouette SVG -->
+    <div id="mom-wrap">
+      <svg id="mom-svg" viewBox="0 0 380 680" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#D81B60"/>
+            <stop offset="100%" stop-color="#880E4F"/>
+          </linearGradient>
+          <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#C2185B"/>
+            <stop offset="100%" stop-color="#AD1457"/>
+          </linearGradient>
+        </defs>
+
+        <!-- DRESS / BODY -->
+        <path d="
+          M 190 680 L 30 680
+          C 15 680 8 665 12 645
+          L 45 490 C 52 458 46 425 40 395
+          C 30 345 38 290 58 252
+          C 70 228 86 210 100 196
+          C 92 182 88 166 90 150
+          C 92 118 116 96 146 90
+          C 150 115 148 138 152 158
+          C 136 166 128 182 132 200
+          C 115 218 98 240 90 268
+          C 78 305 82 348 98 385
+          C 114 422 120 458 115 492
+          L 100 600 L 190 680 Z
+        " fill="url(#g1)"/>
+
+        <path d="
+          M 200 680 L 340 680
+          C 358 680 366 662 362 640
+          L 330 495 C 322 460 328 428 336 398
+          C 348 348 340 294 320 256
+          C 308 232 294 212 286 196
+          C 296 180 300 162 296 144
+          C 294 120 274 100 248 92
+          C 244 116 246 140 244 160
+          C 260 168 268 186 264 204
+          C 278 218 294 240 300 268
+          C 312 308 306 352 290 390
+          C 274 428 268 465 274 500
+          L 285 590 L 200 680 Z
+        " fill="url(#g2)"/>
+
+        <!-- NECK -->
+        <path d="M 168 92 Q 190 82 212 92 L 208 148 Q 190 140 172 148 Z"
+              fill="#C2185B"/>
+
+        <!-- HEAD -->
+        <ellipse cx="190" cy="62" rx="44" ry="50" fill="#AD1457"/>
+
+        <!-- HAIR top & back (long flowing) -->
+        <path d="
+          M 152 30 C 140 18 128 24 122 42
+          C 116 62 120 88 128 112
+          C 118 96 114 74 118 54
+          C 120 36 134 20 152 18 Z
+        " fill="#6D0A3E"/>
+
+        <path d="
+          M 228 28 C 244 16 260 24 266 46
+          C 274 72 268 104 258 132
+          C 268 108 272 78 264 54
+          C 258 36 244 20 228 16 Z
+        " fill="#7B0E46"/>
+
+        <!-- Hair flow right (long, flowing down) -->
+        <path d="
+          M 230 20 C 252 24 268 42 272 65
+          C 278 95 272 135 260 168
+          C 274 150 280 120 278 90
+          C 284 65 275 35 255 22
+          C 248 18 238 18 230 20 Z
+        " fill="#6D0A3E" opacity="0.9"/>
+
+        <!-- HAIR top crown -->
+        <path d="
+          M 152 18 C 165 8 178 4 190 4
+          C 202 4 216 8 228 18
+          C 218 12 204 10 190 10
+          C 176 10 162 14 152 22 Z
+        " fill="#5C0836"/>
+
+        <!-- LEFT SHOULDER/ARM wrapping -->
+        <path d="
+          M 100 196 C 72 215 52 248 46 285
+          C 56 260 72 232 96 214
+          C 108 238 116 265 116 292
+          C 114 265 108 230 100 196 Z
+        " fill="#C2185B" opacity="0.9"/>
+
+        <!-- BABY BODY held on right -->
+        <ellipse cx="295" cy="175" rx="36" ry="44" fill="#D81B60" opacity="0.88"/>
+
+        <!-- BABY HEAD -->
+        <circle cx="294" cy="128" r="32" fill="#C2185B" opacity="0.92"/>
+
+        <!-- BABY HAIR -->
+        <path d="
+          M 270 110 C 276 98 294 94 312 100
+          C 322 105 326 116 320 122
+          C 312 108 294 104 274 112 Z
+        " fill="#6D0A3E" opacity="0.85"/>
+
+        <!-- RIGHT ARM holding baby -->
+        <path d="
+          M 265 200 C 278 180 290 160 296 142
+          C 312 165 322 195 318 224
+          C 308 200 296 180 284 172
+          C 276 184 270 192 265 200 Z
+        " fill="#C2185B" opacity="0.88"/>
+
+        <!-- LEAF CLUSTERS (right side, in silhouette SVG) -->
+        <g opacity="0.8">
+          <ellipse cx="355" cy="55" rx="40" ry="25"
+                   fill="#E91E8C" transform="rotate(-35 355 55)"/>
+          <ellipse cx="372" cy="28" rx="35" ry="22"
+                   fill="#F48FB1" transform="rotate(-55 372 28)"/>
+          <ellipse cx="342" cy="85" rx="38" ry="24"
+                   fill="#D81B60" transform="rotate(-20 342 85)"/>
+          <ellipse cx="365" cy="115" rx="32" ry="20"
+                   fill="#FFCDD2" transform="rotate(-10 365 115)"/>
+        </g>
+        <g opacity="0.75">
+          <ellipse cx="340" cy="600" rx="45" ry="28"
+                   fill="#E91E8C" transform="rotate(25 340 600)"/>
+          <ellipse cx="360" cy="635" rx="38" ry="24"
+                   fill="#F48FB1" transform="rotate(40 360 635)"/>
+          <ellipse cx="320" cy="650" rx="42" ry="26"
+                   fill="#D81B60" transform="rotate(15 320 650)"/>
+        </g>
+
+        <!-- Small decorative petals floating near mom -->
+        <ellipse cx="55" cy="150" rx="14" ry="20" fill="#FFCDD2" opacity="0.5"
+                 transform="rotate(25 55 150)"/>
+        <ellipse cx="40" cy="300" rx="10" ry="16" fill="#FFB3C6" opacity="0.4"
+                 transform="rotate(-20 40 300)"/>
+        <ellipse cx="68" cy="480" rx="12" ry="18" fill="#F8BBD0" opacity="0.45"
+                 transform="rotate(35 68 480)"/>
+      </svg>
+    </div>
+
+    <!-- Text content -->
+    <div id="text-block">
+      <div class="badge">
+        <div class="badge-dot"></div>
+        <span>Happy Mother's Day</span>
+      </div>
+      <div class="main-title">My<br>Mata Ji</div>
+      <div class="sub-title">You are my<br>everything ♥</div>
+      <a href="gallery.html" class="cta-btn">
+        See Our Story →
+      </a>
+    </div>
+
+    <!-- Canvas for falling petals -->
+    <canvas id="petal-canvas"></canvas>
+
+    <!-- Ambient floating flowers (HTML) -->
+
+    <!-- Scroll hint -->
+    <div id="scroll-hint">
+      <span>Scroll to explore</span>
+      <div class="arrow">↓</div>
+    </div>
+
+  </div><!-- scene-inner -->
+</div><!-- scene -->
+
+<!-- Page dots -->
+<nav class="page-dots">
+  <a href="index.html" class="active"></a>
+  <a href="gallery.html"></a>
+  <a href="bloom.html"></a>
+  <a href="letter.html"></a>
+  <!-- <a href="musicbox.html"></a> -->
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+// ====== AMBIENT FLOWERS ======
+const flowerColors = ['#FF80AB','#F48FB1','#FFB3C6','#E91E8C','#FFCDD2'];
+function makeSVGFlower(color, size) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns,'svg');
+  svg.setAttribute('viewBox','0 0 40 40');
+  svg.style.cssText=`width:${size}px;height:${size}px`;
+  const c = color;
+  const paths = [
+    [20,4,20,36],[4,20,36,20],[7,7,33,33],[33,7,7,33]
+  ];
+  paths.forEach(([x1,y1,x2,y2])=>{
+    const e = document.createElementNS(ns,'ellipse');
+    const mx=(x1+x2)/2, my=(y1+y2)/2;
+    const len=Math.hypot(x2-x1,y2-y1)/2;
+    e.setAttribute('cx',mx); e.setAttribute('cy',my);
+    e.setAttribute('rx',6); e.setAttribute('ry',len);
+    e.setAttribute('fill',c);
+    e.setAttribute('transform',
+      `rotate(${Math.atan2(y2-y1,x2-x1)*180/Math.PI},${mx},${my})`);
+    svg.appendChild(e);
+  });
+  const circle=document.createElementNS(ns,'circle');
+  circle.setAttribute('cx',20);circle.setAttribute('cy',20);
+  circle.setAttribute('r',5);
+  circle.setAttribute('fill','#FFD54F');
+  svg.appendChild(circle);
+  return svg;
+}
+
+for(let i=0;i<8;i++){
+  const wrap=document.createElement('div');
+  wrap.className='ambient-flower';
+  const sz=20+Math.random()*28;
+  const color=flowerColors[Math.floor(Math.random()*flowerColors.length)];
+  wrap.style.cssText=`
+    left:${5+Math.random()*90}vw;
+    bottom:-60px;
+    animation-duration:${8+Math.random()*12}s;
+    animation-delay:-${Math.random()*15}s;
+  `;
+  wrap.appendChild(makeSVGFlower(color,sz));
+  document.getElementById('scene').appendChild(wrap);
+}
+
+// ====== FALLING PETALS CANVAS ======
+const canvas=document.getElementById('petal-canvas');
+const ctx=canvas.getContext('2d');
+function resize(){
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+}
+resize();
+window.addEventListener('resize',resize);
+
+const pColors=['#FFB3C6','#FFCDD2','#F8BBD0','#FFE0B2','#FFF0F5','#FFCDD2'];
+const petals=Array.from({length:55},()=>({
+  x:Math.random()*window.innerWidth,
+  y:Math.random()*window.innerHeight,
+  w:5+Math.random()*9,
+  h:8+Math.random()*14,
+  rot:Math.random()*Math.PI*2,
+  rs:(Math.random()-.5)*0.04,
+  vy:0.5+Math.random()*0.8,
+  sw:Math.random()*Math.PI*2,
+  ss:0.2+Math.random()*0.35,
+  color:pColors[Math.floor(Math.random()*pColors.length)],
+  op:0.25+Math.random()*0.45
+}));
+
+let t=0;
+function animPetals(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  t+=0.016;
+  petals.forEach(p=>{
+    p.y+=p.vy;
+    p.x+=Math.sin(t*p.ss+p.sw)*0.7;
+    p.rot+=p.rs;
+    if(p.y>canvas.height+20){
+      p.y=-20; p.x=Math.random()*canvas.width;
+    }
+    ctx.save();
+    ctx.translate(p.x,p.y);
+    ctx.rotate(p.rot);
+    ctx.globalAlpha=p.op;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();
+    ctx.ellipse(0,0,p.w/2,p.h/2,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+  requestAnimationFrame(animPetals);
+}
+animPetals();
+
+// ====== GSAP ENTRANCE ANIMATIONS ======
+gsap.set(['.badge','.main-title','.sub-title','.cta-btn','#scroll-hint'],
+  {opacity:0});
+
+const tl=gsap.timeline({defaults:{ease:'power3.out'}});
+tl.to('.badge',    {opacity:1,y:0,from:{y:20},duration:0.7,delay:0.3})
+  .to('.main-title',{opacity:1,scale:1,from:{scale:0.85},duration:0.8,ease:'back.out(1.4)'},'-=0.2')
+  .to('.sub-title', {opacity:0.75,y:0,from:{y:15},duration:0.6},'-=0.3')
+  .to('.cta-btn',   {opacity:1,y:0,from:{y:20},duration:0.6},'-=0.3')
+  .to('#scroll-hint',{opacity:1,duration:0.5},'-=0.1');
+
+// ====== 3D TILT ON TOUCH / MOUSE MOVE ======
+const inner=document.getElementById('scene-inner');
+let targetRX=0,targetRY=0,curRX=0,curRY=0;
+
+function handleMove(nx,ny){
+  // nx, ny normalized -1 to 1
+  targetRY=nx*6;   // tilt left-right
+  targetRX=-ny*4;  // tilt up-down
+}
+
+window.addEventListener('mousemove',e=>{
+  const nx=(e.clientX/window.innerWidth-.5)*2;
+  const ny=(e.clientY/window.innerHeight-.5)*2;
+  handleMove(nx,ny);
+});
+
+window.addEventListener('deviceorientation',e=>{
+  if(e.gamma===null) return;
+  const nx=Math.max(-1,Math.min(1,e.gamma/20));
+  const ny=Math.max(-1,Math.min(1,(e.beta-45)/25));
+  handleMove(nx,ny);
+},{passive:true});
+
+function tiltLoop(){
+  curRX+=(targetRX-curRX)*0.06;
+  curRY+=(targetRY-curRY)*0.06;
+  inner.style.transform=
+    `rotateX(${curRX}deg) rotateY(${curRY}deg)`;
+  requestAnimationFrame(tiltLoop);
+}
+tiltLoop();
+
+// ====== TOUCH RIPPLE on tap ======
+document.addEventListener('touchstart',e=>{
+  const touch=e.touches[0];
+  const ripple=document.createElement('div');
+  ripple.style.cssText=`
+    position:fixed;
+    left:${touch.clientX-30}px;
+    top:${touch.clientY-30}px;
+    width:60px;height:60px;
+    border-radius:50%;
+    border:2px solid rgba(233,30,140,0.5);
+    pointer-events:none;
+    z-index:100;
+    animation:rippleOut 0.6s ease-out forwards;
+  `;
+  document.body.appendChild(ripple);
+  setTimeout(()=>ripple.remove(),700);
+},{passive:true});
+
+// Add ripple keyframe dynamically
+const style=document.createElement('style');
+style.textContent=`
+  @keyframes rippleOut{
+    from{transform:scale(0.5);opacity:1}
+    to  {transform:scale(2.5);opacity:0}
+  }
+`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>

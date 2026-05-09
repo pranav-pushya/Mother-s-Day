@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>A Letter for You</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <style>
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: #FFF0F5; font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #threejs-canvas { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+        #css-backgrounds { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+
+        .back-btn { 
+            position: fixed; top: 30px; left: 30px; color: #AD1457; text-decoration: none; 
+            font-weight: 600; font-size: 14px; pointer-events: auto; z-index: 40; transition: opacity 0.3s; 
+        }
+        .back-btn:hover { opacity: 0.7; }
+        
+        .dot-nav { 
+            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); 
+            display: flex; gap: 12px; pointer-events: auto; align-items: center; z-index: 40; 
+        }
+        .dot { 
+            width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid #E91E8C; 
+            transition: all 0.3s; text-decoration: none; display: block; 
+        }
+        .dot.active { width: 10px; height: 10px; background-color: #E91E8C; border: none; }
+
+        @media (max-width: 768px) { .back-btn { top: 20px; left: 20px; } }
+
+        .card-container {
+            position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; 
+            z-index: 20; pointer-events: none;
+        }
+
+        .card {
+            width: min(90vw, 500px);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(173, 20, 87, 0.15), inset 0 0 0 1px rgba(255,255,255,0.6);
+            position: relative;
+            padding: 48px 44px;
+            box-sizing: border-box;
+            pointer-events: auto;
+            opacity: 0; /* JS handles entrance */
+        }
+        @media(max-width: 768px) {
+            .card { padding: 36px 32px; }
+        }
+
+        .card-inner {
+            border: 1px dashed rgba(233, 30, 140, 0.3);
+            border-radius: 12px;
+            padding: 30px 20px;
+            position: relative;
+        }
+
+        .header-label { 
+            font-size: clamp(13px, 3.5vw, 16px); letter-spacing: 0.22em; 
+            color: #AD1457; text-align: center; font-weight: 600; 
+        }
+
+        .divider { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0; }
+        .divider span:not(.heart) { height: 1px; width: 40px; background: rgba(233, 30, 140, 0.3); }
+        .divider .heart { font-size: 18px; line-height: 2px; color: #E91E8C; }
+
+        .greeting { 
+            font-family: 'Playfair Display', serif; font-size: clamp(32px, 7vw, 48px); 
+            margin: 0 0 20px 0; color: #AD1457; font-weight: 600; font-style: italic; 
+        }
+
+        .letter-body { 
+            font-size: clamp(17px, 4.5vw, 22px); line-height: 2.1; 
+            color: #6D3B47; min-height: 220px; 
+        }
+        
+        #cursor { 
+            display: inline-block; width: 2px; animation: blink 1s step-end infinite; 
+            color: #E91E8C; margin-left: 2px; font-weight: bold;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        .signature { 
+            font-family: 'Playfair Display', serif; font-size: clamp(20px, 5vw, 28px); 
+            margin-top: 24px; color: #AD1457; font-style: italic; text-align: right; 
+            opacity: 0; transform-origin: right center; display: block;
+        }
+
+        /* CSS Background Animations */
+        .css-petal {
+            position: absolute; border-radius: 50% 0 50% 50%;
+            filter: blur(3px); 
+            animation: floatCssPetal ease-in-out infinite alternate;
+            animation-fill-mode: forwards;
+        }
+        @keyframes floatCssPetal {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(40px, -60px) rotate(45deg); }
+        }
+
+        .golden-mote {
+            position: absolute; border-radius: 50%; box-shadow: 0 0 6px currentColor;
+            animation: floatMote linear infinite;
+        }
+        @keyframes floatMote {
+            0% { transform: translateY(0); opacity: 0; }
+            20% { opacity: var(--op); }
+            80% { opacity: var(--op); }
+            100% { transform: translateY(-150px); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LAYER 1: Three.js Petals -->
+    <div id="threejs-canvas"></div>
+    
+    <!-- LAYER 2: CSS Ambient Backgrounds -->
+    <div id="css-backgrounds"></div>
+    
+    <!-- LAYER 3: UI & Card -->
+    <a href="index.html" class="back-btn">&#8592; Back</a>
+    
+    <div class="dot-nav">
+        <a href="index.html" class="dot"></a>
+        <a href="gallery.html" class="dot"></a>
+        <a href="bloom.html" class="dot"></a>
+        <a href="letter.html" class="dot active"></a>
+        <!-- <a href="musicbox.html" class="dot"></a> -->
+    </div>
+
+    <div class="card-container">
+        <div class="card">
+            <!-- SVG Corners -->
+            <svg class="corner top-left" viewBox="0 0 100 100" width="30" height="30" style="position:absolute; top: 15px; left: 15px; fill: none; stroke: rgba(233, 30, 140, 0.4); stroke-width: 4;">
+                <path d="M0,20 Q0,0 20,0 M0,40 Q0,0 40,0"/>
+            </svg>
+            <svg class="corner top-right" viewBox="0 0 100 100" width="30" height="30" style="position:absolute; top: 15px; right: 15px; fill: none; stroke: rgba(233, 30, 140, 0.4); stroke-width: 4; transform: rotate(90deg);">
+                <path d="M0,20 Q0,0 20,0 M0,40 Q0,0 40,0"/>
+            </svg>
+            <svg class="corner bottom-right" viewBox="0 0 100 100" width="30" height="30" style="position:absolute; bottom: 15px; right: 15px; fill: none; stroke: rgba(233, 30, 140, 0.4); stroke-width: 4; transform: rotate(180deg);">
+                <path d="M0,20 Q0,0 20,0 M0,40 Q0,0 40,0"/>
+            </svg>
+            <svg class="corner bottom-left" viewBox="0 0 100 100" width="30" height="30" style="position:absolute; bottom: 15px; left: 15px; fill: none; stroke: rgba(233, 30, 140, 0.4); stroke-width: 4; transform: rotate(270deg);">
+                <path d="M0,20 Q0,0 20,0 M0,40 Q0,0 40,0"/>
+            </svg>
+            
+            <div class="card-inner">
+                <div class="header-label">HAPPY MOTHER'S DAY</div>
+                <div class="divider">
+                    <span></span><span class="heart">♥</span><span></span>
+                </div>
+                
+                <h1 class="greeting">Dear Mata Ji,</h1>
+                
+                <div class="letter-body">
+                    <span id="typewriter-text"></span><span id="cursor">|</span>
+                </div>
+                
+                <span class="signature" id="signature">— BY - Raja Beta ♥</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. CSS Backgrounds Setup
+            const cssBg = document.getElementById('css-backgrounds');
+            
+            // 12 Large Blurred Petals
+            const petalColors = ['#FFB3C6', '#FFCDD2', '#FFE0B2', '#FFF0F5', '#F8BBD0'];
+            for(let i=0; i<12; i++) {
+                const p = document.createElement('div');
+                p.className = 'css-petal';
+                p.style.left = (Math.random() * 100) + 'vw';
+                p.style.top = (Math.random() * 100) + 'vh';
+                const size = 40 + Math.random() * 40;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.background = petalColors[Math.floor(Math.random() * petalColors.length)];
+                p.style.animationDelay = '0s';
+                p.style.animationDuration = (8 + Math.random() * 4) + 's';
+                p.style.opacity = 0.3 + Math.random() * 0.2;
+                cssBg.appendChild(p);
+            }
+
+            // 30 Golden Ambient Particles
+            const moteColors = ['#FFD54F', '#FFB74D', '#FFFFFF'];
+            for(let i=0; i<30; i++) {
+                const m = document.createElement('div');
+                m.className = 'golden-mote';
+                m.style.left = (Math.random() * 100) + 'vw';
+                m.style.top = (Math.random() * 100) + 'vh';
+                const s = 2 + Math.random() * 2;
+                m.style.width = s + 'px';
+                m.style.height = s + 'px';
+                m.style.background = moteColors[Math.floor(Math.random() * moteColors.length)];
+                m.style.color = m.style.background; 
+                m.style.animationDelay = '0s';
+                m.style.animationDuration = (4 + Math.random() * 6) + 's';
+                m.style.setProperty('--op', 0.4 + Math.random() * 0.3);
+                cssBg.appendChild(m);
+            }
+
+            // 2. Three.js Background Setup
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.z = 5;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('threejs-canvas').appendChild(renderer.domElement);
+
+            // CONTINUOUS PETAL RAIN — no gaps ever
+
+            const PETAL_COUNT = 80;
+            const petalData = [];
+
+            // Create InstancedMesh for petals
+            const petalShape = new THREE.Shape();
+            petalShape.moveTo(0, 0);
+            petalShape.bezierCurveTo(-0.08, 0.06, -0.1, 0.18, 0, 0.28);
+            petalShape.bezierCurveTo(0.1, 0.18, 0.08, 0.06, 0, 0);
+
+            const petalGeo = new THREE.ShapeGeometry(petalShape, 6);
+            const petalMat = new THREE.MeshBasicMaterial({
+              color: 0xFFB3C6,
+              side: THREE.DoubleSide,
+              transparent: true,
+              opacity: 0.7
+            });
+
+            const petalMesh = new THREE.InstancedMesh(petalGeo, petalMat, PETAL_COUNT);
+            scene.add(petalMesh);
+
+            // Initialize ALL petals spread across full height
+            for (let i = 0; i < PETAL_COUNT; i++) {
+              petalData.push({
+                x: (Math.random() - 0.5) * 12,
+                y: (Math.random() - 0.5) * 16,  
+                z: (Math.random() - 0.5) * 2,
+                vx: (Math.random() - 0.5) * 0.01,
+                vy: -(0.015 + Math.random() * 0.02),  
+                rotZ: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 0.03,
+                swayOffset: Math.random() * Math.PI * 2,
+                swaySpeed: 0.3 + Math.random() * 0.4,
+                scale: 0.6 + Math.random() * 0.8,
+                color: [0xFFB3C6, 0xFFCDD2, 0xFFE0B2, 0xFFF0F5, 0xF8BBD0][
+                  Math.floor(Math.random() * 5)
+                ]
+              });
+            }
+
+            const dummy = new THREE.Object3D();
+            const clock = new THREE.Clock();
+
+            function updatePetals() {
+              const time = clock.getElapsedTime();
+              const viewTop = 9;    
+              const viewBottom = -9; 
+              
+              petalData.forEach((p, i) => {
+                p.y += p.vy;
+                p.x += p.vx + Math.sin(time * p.swaySpeed + p.swayOffset) * 0.008;
+                p.rotZ += p.rotSpeed;
+                
+                if (p.y < viewBottom) {
+                  p.y = viewTop + Math.random() * 2;  
+                  p.x = (Math.random() - 0.5) * 12;  
+                }
+                
+                dummy.position.set(p.x, p.y, p.z);
+                dummy.rotation.z = p.rotZ;
+                dummy.scale.setScalar(p.scale);
+                dummy.updateMatrix();
+                petalMesh.setMatrixAt(i, dummy.matrix);
+                
+                petalMesh.setColorAt(i, new THREE.Color(p.color));
+              });
+              
+              petalMesh.instanceMatrix.needsUpdate = true;
+              if (petalMesh.instanceColor) petalMesh.instanceColor.needsUpdate = true;
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                updatePetals();
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // 3. Animations & Logic
+            const textToType = "Thank you for your endless patience, your unwavering support, and the countless sacrifices you've made for our family. You are the heart of our home and my greatest inspiration. I love you more than words can say.";
+            const textEl = document.getElementById('typewriter-text');
+            const cursor = document.getElementById('cursor');
+            const signature = document.getElementById('signature');
+
+            gsap.set('.card', { y: 30, scale: 0.92, opacity: 0 });
+
+            window.onload = () => {
+                gsap.to('.card', {
+                    opacity: 1,
+                    scale: 1,
+                    y: 0,
+                    duration: 1.2,
+                    ease: 'power2.out',
+                    onComplete: startTypewriter
+                });
+            };
+
+            function startTypewriter() {
+                let charIndex = 0;
+                function type() {
+                    if(charIndex < textToType.length) {
+                        textEl.textContent += textToType.charAt(charIndex);
+                        charIndex++;
+                        setTimeout(type, 35); 
+                    } else {
+                        setTimeout(() => {
+                            gsap.to(cursor, { opacity: 0, duration: 0.5, onComplete: () => cursor.remove() });
+                        }, 3000);
+                        
+                        setTimeout(() => {
+                            gsap.to(signature, {
+                                opacity: 1,
+                                duration: 1,
+                                onComplete: () => {
+                                    gsap.to(signature, {
+                                        scale: 1.03,
+                                        duration: 0.2,
+                                        yoyo: true,
+                                        repeat: 1,
+                                        ease: "power1.inOut"
+                                    });
+                                }
+                            });
+                        }, 1000);
+                    }
+                }
+                type();
+            }
+        });
+    </script>
+</body>
+</html>

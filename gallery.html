@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Our Beautiful Moments</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: linear-gradient(160deg, #FFF0F5, #FFCDD2, #FFE4EC);
+  min-height: 100vh;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#gallery-page {
+  position: relative;
+  z-index: 10;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 24px;
+}
+
+/* HEADER */
+#gallery-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 16px 0 8px;
+  gap: 12px;
+  position: relative;
+}
+
+#back-btn {
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(233,30,140,0.2);
+  color: #E91E8C;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+#gallery-header h1 {
+  font-size: clamp(16px, 4.5vw, 24px);
+  color: #AD1457;
+  font-weight: 600;
+  text-align: center;
+  flex: 1;
+}
+
+/* PHOTO STAGE — this is the key fix */
+#photo-stage {
+  position: relative;
+  width: min(85vw, 400px);
+  /* Height: leave room for header + caption + nav */
+  height: calc(100vh - 200px);
+  max-height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+#photo-frame {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 20px;
+  padding: 10px;
+  box-shadow: 
+    0 8px 40px rgba(233,30,140,0.2),
+    0 2px 8px rgba(233,30,140,0.1);
+  overflow: hidden;
+  position: relative;
+  /* Polaroid-style bottom */
+  padding-bottom: 20px;
+}
+
+#active-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
+/* Corner flourishes (pink decorative) */
+.corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: #F48FB1;
+  border-style: solid;
+  opacity: 0.6;
+}
+.corner.tl { top: -4px; left: -4px; border-width: 2px 0 0 2px; border-radius: 6px 0 0 0; }
+.corner.tr { top: -4px; right: -4px; border-width: 2px 2px 0 0; border-radius: 0 6px 0 0; }
+.corner.bl { bottom: -4px; left: -4px; border-width: 0 0 2px 2px; border-radius: 0 0 0 6px; }
+.corner.br { bottom: -4px; right: -4px; border-width: 0 2px 2px 0; border-radius: 0 0 6px 0; }
+
+/* CAPTION */
+#caption-area {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+#memory-count {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: #E91E8C;
+  opacity: 0.6;
+  margin-bottom: 4px;
+}
+
+#caption-text {
+  font-size: clamp(16px, 4vw, 20px);
+  color: #AD1457;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* NAVIGATION */
+#nav-arrows {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+  margin-bottom: 40px;
+}
+
+#prev-btn, #next-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(233,30,140,0.3);
+  color: #E91E8C;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#prev-btn:active, #next-btn:active {
+  transform: scale(0.92);
+  background: rgba(233,30,140,0.1);
+}
+
+#dot-indicators {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ind-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(233,30,140,0.25);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.ind-dot.active {
+  width: 22px;
+  border-radius: 4px;
+  background: #E91E8C;
+}
+
+/* PAGE DOTS NAV */
+.page-dots {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 200;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(233,30,140,0.15);
+}
+.page-dots a {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(233,30,140,0.25);
+  display: block;
+  transition: all 0.3s;
+}
+.page-dots a.active {
+  width: 20px;
+  border-radius: 4px;
+  background: #E91E8C;
+}
+
+/* Extra small screens */
+@media (max-width: 390px) {
+  #photo-stage {
+    width: 90vw;
+    height: calc(100vh - 210px);
+  }
+  #prev-btn, #next-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 15px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="gallery-page">
+  <!-- Animated background -->
+  <canvas id="bg-canvas"></canvas>
+  
+  <!-- Header -->
+  <div id="gallery-header">
+    <a href="index.html" id="back-btn">← Back</a>
+    <h1>Our Beautiful Moments</h1>
+  </div>
+  
+  <!-- Main photo display -->
+  <div id="photo-stage">
+    <div id="photo-frame">
+      <img id="active-photo" src="photos/photo1.png" alt="Memory">
+    </div>
+    
+    <!-- Decorative corner flourishes -->
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+  </div>
+  
+  <!-- Caption -->
+  <div id="caption-area">
+    <div id="memory-count">MEMORY 1 OF 6</div>
+    <div id="caption-text">My greatest blessing 🌸</div>
+  </div>
+  
+  <!-- Navigation -->
+  <div id="nav-arrows">
+    <button id="prev-btn">←</button>
+    <div id="dot-indicators"></div>
+    <button id="next-btn">→</button>
+  </div>
+  
+  <!-- Page dots -->
+  <div class="page-dots">
+    <a href="index.html"></a>
+    <a href="gallery.html" class="active"></a>
+    <a href="bloom.html"></a>
+    <a href="letter.html"></a>
+    <!-- <a href="musicbox.html"></a> -->
+  </div>
+</div>
+
+<script>
+const photos = [
+  'photos/photo1.png',
+  'photos/photo2.png',
+  'photos/photo3.png',
+  'photos/photo4.png',
+  'photos/photo5.png',
+  'photos/photo6.png'
+];
+
+// EDIT CAPTIONS HERE
+const captions = [
+  "My greatest blessing 🌸",
+  "Home is wherever you are 🏡",
+  "Thank you for everything ♥",
+  "My first superhero 💪",
+  "Unconditional love 🌺",
+  "You make life beautiful ✨"
+];
+
+let current = 0;
+let isAnimating = false;
+
+const photoEl = document.getElementById('active-photo');
+const captionEl = document.getElementById('caption-text');
+const countEl = document.getElementById('memory-count');
+
+// Photo fallback
+function setPhoto(index) {
+  photoEl.onerror = () => {
+    photoEl.style.display = 'none';
+    document.getElementById('photo-frame').style.background = 
+      'linear-gradient(135deg, #FCE4EC, #FFF3E0)';
+    document.getElementById('photo-frame').innerHTML += 
+      '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:48px;">🌸</div>';
+  };
+  photoEl.src = photos[index];
+  captionEl.textContent = captions[index];
+  countEl.textContent = `MEMORY ${index + 1} OF ${photos.length}`;
+  
+  // Update indicator dots
+  document.querySelectorAll('.ind-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === index);
+  });
+}
+
+function goTo(index, direction) {
+  if (isAnimating) return;
+  isAnimating = true;
+  
+  const stage = document.getElementById('photo-stage');
+  const outX = direction > 0 ? -30 : 30;
+  
+  // Slide out
+  stage.style.transition = 'transform 0.25s ease-in, opacity 0.25s ease-in';
+  stage.style.transform = `translateX(${outX}px)`;
+  stage.style.opacity = '0';
+  
+  setTimeout(() => {
+    current = (index + photos.length) % photos.length;
+    
+    // Clear fallback canvas element if present
+    const frame = document.getElementById('photo-frame');
+    if (frame.children.length > 1) {
+        frame.removeChild(frame.lastChild);
+        frame.style.background = 'white';
+        photoEl.style.display = 'block';
+    }
+    
+    setPhoto(current);
+    
+    // Slide in from opposite
+    stage.style.transition = 'none';
+    stage.style.transform = `translateX(${-outX}px)`;
+    
+    requestAnimationFrame(() => {
+      stage.style.transition = 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease-out';
+      stage.style.transform = 'translateX(0)';
+      stage.style.opacity = '1';
+      
+      // Petal burst on photo change
+      burstPetals();
+      
+      setTimeout(() => { isAnimating = false; }, 300);
+    });
+  }, 250);
+}
+
+// Buttons
+document.getElementById('prev-btn').onclick = () => goTo(current - 1, -1);
+document.getElementById('next-btn').onclick = () => goTo(current + 1, 1);
+
+// Swipe support (mobile)
+let touchX = 0;
+document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const diff = touchX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 50) goTo(current + (diff > 0 ? 1 : -1), diff > 0 ? 1 : -1);
+});
+
+// Build indicator dots
+const dotContainer = document.getElementById('dot-indicators');
+photos.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'ind-dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => goTo(i, i > current ? 1 : -1);
+  dotContainer.appendChild(d);
+});
+
+setPhoto(0);
+
+// === BACKGROUND: Canvas petal rain ===
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const petalColors = ['#FFB3C6','#FFCDD2','#F8BBD0','#FFE0B2','#FFF0F5'];
+const petals = Array.from({length: 55}, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  w: 6 + Math.random() * 10,
+  h: 10 + Math.random() * 16,
+  rot: Math.random() * Math.PI * 2,
+  rotS: (Math.random() - 0.5) * 0.04,
+  vy: 0.4 + Math.random() * 0.7,
+  vx: 0,
+  sway: Math.random() * Math.PI * 2,
+  swayS: 0.2 + Math.random() * 0.3,
+  color: petalColors[Math.floor(Math.random() * petalColors.length)],
+  opacity: 0.3 + Math.random() * 0.4
+}));
+
+// Burst petals on photo change
+const burstPetalList = [];
+function burstPetals() {
+  const cx = canvas.width / 2;
+  const cy = canvas.height * 0.4;
+  for (let i = 0; i < 18; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.5 + Math.random() * 3;
+    burstPetalList.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2,
+      w: 8 + Math.random() * 8,
+      h: 12 + Math.random() * 12,
+      rot: Math.random() * Math.PI,
+      rotS: (Math.random() - 0.5) * 0.1,
+      life: 1.0,
+      color: petalColors[Math.floor(Math.random() * petalColors.length)]
+    });
+  }
+}
+
+let t = 0;
+function animateBg() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  t += 0.016;
+  
+  // Background petals
+  petals.forEach(p => {
+    p.y += p.vy;
+    p.x += Math.sin(t * p.swayS + p.sway) * 0.6;
+    p.rot += p.rotS;
+    if (p.y > canvas.height + 20) { p.y = -20; p.x = Math.random() * canvas.width; }
+    
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.globalAlpha = p.opacity;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, p.w/2, p.h/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+  
+  // Burst petals
+  for (let i = burstPetalList.length - 1; i >= 0; i--) {
+    const b = burstPetalList[i];
+    b.x += b.vx; b.y += b.vy; b.vy += 0.08;
+    b.rot += b.rotS;
+    b.life -= 0.022;
+    if (b.life <= 0) { burstPetalList.splice(i, 1); continue; }
+    
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(b.rot);
+    ctx.globalAlpha = b.life * 0.8;
+    ctx.fillStyle = b.color;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, b.w/2, b.h/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  
+  requestAnimationFrame(animateBg);
+}
+animateBg();
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>
